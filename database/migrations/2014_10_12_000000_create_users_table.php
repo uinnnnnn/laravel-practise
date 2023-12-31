@@ -12,15 +12,14 @@ return new class extends Migration {
      */
     public function up()
     {
-        Schema::create('admin', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->comment('使用者 id');
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->rememberToken();
             $table->timestamps();
-            $table->timestamp('start_at')->nullable()->comment('開始時間');
-            $table->timestamp('end_at')->nullable()->comment('結束時間');
-            $table->foreign('user_id')
-                    ->references('id')
-                    ->on('user');
         });
     }
 
@@ -31,6 +30,6 @@ return new class extends Migration {
      */
     public function down()
     {
-        Schema::dropIfExists('admin');
+        Schema::dropIfExists('users');
     }
 };
