@@ -3,52 +3,53 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Exceptions\TokenExpiredException;
-use Tymon\JWTAuth\Exceptions\TokenInvalidException;
-use Tymon\JWTAuth\Http\Middleware\BaseMiddleware;
 use Symfony\Component\HttpFoundation\Response;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\JWTException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenExpiredException;
+use PHPOpenSourceSaver\JWTAuth\Exceptions\TokenInvalidException;
 
-class JwtVerifiedMiddleware extends BaseMiddleware
+class JwtVerifiedMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
-     */
-    public function handle(Request $request, Closure $next)
+    // Laravel 的 Debug 模式
+    private $appDebug;
+    public function __construct()
     {
+        $this->appDebug = config('app.debug', false);
+    }
+    public function handle($request, Closure $next)
+    {
+        $response = [
+            'error_code' => 300001,
+            'message' => '登入階段已過期請重新登入',
+        ];
         try {
-            // 驗證 JWT
-            $user = auth('api')->user();
-            if (!$user) {
-                throw new JWTException();
-            }
+            JWTAuth::parseToken()->authenticate();
+
+            return $next($request);
         } catch (TokenExpiredException $e) {
-            $httpStatus = Response::HTTP_UNAUTHORIZED;
-            $response = [
-                "statusCode" => $httpStatus,
-                "error" => 'token_expired'
-            ];
-            return response()->json($response, $httpStatus);
+            $response['error_code'] = 300001;
+
+            $response = $this->handleException($response, $e);
         } catch (TokenInvalidException $e) {
-            $httpStatus = Response::HTTP_UNAUTHORIZED;
-            $response = [
-                "statusCode" => $httpStatus,
-                'error' => 'token_invalid'
-            ];
-            return response()->json($response, $httpStatus);
+            $response['error_code'] = 300002;
+
+            $response = $this->handleException($response, $e);
         } catch (JWTException $e) {
-            $httpStatus = Response::HTTP_UNAUTHORIZED;
-            $response = [
-                "statusCode" => $httpStatus,
-                'error' => 'Unauthorized'
-            ];
-            return response()->json($response, $httpStatus);
+            $response['error_code'] = 300003;
+
+            $response = $this->handleException($response, $e);
         }
-        return $next($request);
+        return response()->json($response, Response::HTTP_UNAUTHORIZED);
+    }
+
+    private function handleException(array $response, $exception)
+    {
+        if ($this->appDebug) {
+            $response['detail'] = [
+                'jwt' => $exception->getMessage(),
+            ];
+        }
+        return $response;
     }
 }

@@ -8,24 +8,22 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^7.3|^8.0",
+        "php": "^8.0.2",
         "darkaonline/l5-swagger": "^8.3",
-        "fruitcake/laravel-cors": "^2.0",
-        "guzzlehttp/guzzle": "^7.0.1",
-        "laravel/framework": "^8.75",
-        "laravel/sanctum": "^2.11",
-        "laravel/tinker": "^2.5",
-        "tymon/jwt-auth": "^1.0"
+        "guzzlehttp/guzzle": "^7.2",
+        "laravel/framework": "^9.19",
+        "laravel/tinker": "^2.7",
+        "php-open-source-saver/jwt-auth": "^1.4"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.12",
-        "facade/ignition": "^2.5",
         "fakerphp/faker": "^1.9.1",
+        "laravel/pint": "^0.2.1",
         "laravel/sail": "^1.0.1",
         "mockery/mockery": "^1.4.4",
-        "nunomaduro/collision": "^5.10",
+        "nunomaduro/collision": "^6.1",
         "phpunit/phpunit": "^9.5.10",
-        "squizlabs/php_codesniffer": "*"
+        "spatie/laravel-ignition": "^1.0"
     },
     "autoload": {
         "psr-4": {
@@ -53,19 +51,14 @@
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
         ],
-        "post-install-cmd": [
-            "phpcs --config-set colors 1",
-            "phpcs --config-set default_standard PSR12",
+        "dev": [
             "git config core.hooksPath .githooks"
         ],
         "lint": [
-            "phpcs --standard=psr12 -p app/ config/ routes/ tests/"
+            "pint --test"
         ],
         "lint:save": [
-            "phpcbf --standard=psr12 -p app/ config/ routes/ tests/"
-        ],
-        "lint:report": [
-            "phpcs --standard=psr12 -p -s --report=gitblame app/ config/ routes/ tests/"
+            "pint"
         ]
     },
     "extra": {

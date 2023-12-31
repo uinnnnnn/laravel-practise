@@ -1,0 +1,21 @@
+{
+    "preset": "psr12",
+    "rules": {
+        "single_quote": true,
+        "simplified_null_return": true,
+        "cast_spaces": {
+            "space": "single"
+        },
+        "new_with_braces": {
+            "anonymous_class": false,
+            "named_class": true
+        },
+        "align_multiline_comment": {
+            "comment_type": "phpdocs_like"
+        },
+        "single_space_after_construct": true,
+        "whitespace_after_comma_in_array": true,
+        "php_unit_method_casing": true,
+        "class_reference_name_casing": true
+    }
+}

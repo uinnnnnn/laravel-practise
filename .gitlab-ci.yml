@@ -1,0 +1,86 @@
+stages:
+  - pre-check
+  - sonar
+  - deploy_dev
+  - deploy_master
+
+phpcs-check:
+  stage: pre-check
+  image:
+    name: gitlab.cmrdb.cs.pu.edu.tw:5050/second-hand-books/backend/composesr-lint-image
+    entrypoint: [""]
+  tags:
+    - shb
+  cache:
+    key:
+      files:
+        - composer.lock
+      prefix: ${CI_JOB_NAME}
+    paths:
+      - vendor/
+  before_script:
+    - echo "====開始安裝===="
+    - composer install
+  script:
+    - echo "Hello, $GITLAB_USER_LOGIN!"
+    - echo $CI_COMMIT_MESSAGE
+    - composer --version
+    - ./vendor/bin/pint --version
+    - git branch -a
+    - echo "====開始檢查===="
+    - composer lint
+
+sonarqube-check:
+  stage: sonar
+  image:
+    name: sonarsource/sonar-scanner-cli:4.6
+    entrypoint: [""]
+  tags:
+    - shb
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar" # Defines the location of the analysis task cache
+    GIT_DEPTH: "0" # Tells git to fetch all the branches of the project, required by the analysis task
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  script:
+    - sonar-scanner
+  allow_failure: true
+  only:
+    - merge_requests
+    - master
+    - develop
+
+deploy_dev:
+  stage: deploy_dev
+  image:
+    name: linuxserver/openssh-server
+  tags:
+    - shb
+  before_script:
+    - mkdir ~/.ssh
+    - (echo "$DEV_SSH_PRIVATE_KEY") > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - ssh $DEV_SSH_ACCOUNT@$DEV_HOST "cd ~/dev/backend && git status && echo "%%%%%%更新程式碼%%%%%%" && git pull origin develop && echo "%%%%%%下載套件更新%%%%%%" && composer install --no-dev && echo "%%%%%%資料庫表更新%%%%%%" && echo "yes" | php artisan migrate && echo "%%%%%%API文件更新%%%%%%" && php artisan l5-swagger:generate && echo "%%%%%%完成%%%%%%" "
+  only:
+    - develop
+
+deploy_master:
+  stage: deploy_master
+  image:
+    name: linuxserver/openssh-server
+  tags:
+    - shb
+  before_script:
+    - mkdir ~/.ssh
+    - (echo "$MASTER_SSH_PRIVATE_KEY") > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  script:
+    - ssh $MASTER_SSH_ACCOUNT@$MASTER_HOST "cd ~/master/backend && git status && echo "%%%%%%更新程式碼%%%%%%" && git pull origin master && echo "%%%%%%下載套件更新%%%%%%" && composer install --no-dev && echo "%%%%%%資料庫表更新%%%%%%" && echo "yes" | php artisan migrate && echo "%%%%%%API文件更新%%%%%%" && php artisan l5-swagger:generate && echo "%%%%%%完成%%%%%%" "
+  only:
+    - master
+  when: manual

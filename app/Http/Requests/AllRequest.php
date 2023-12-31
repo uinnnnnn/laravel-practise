@@ -10,6 +10,13 @@ use Symfony\Component\HttpFoundation\Response;
 class AllRequest extends FormRequest
 {
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge(['id' => $this->route('id')]);
+    }
+    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -30,7 +37,7 @@ class AllRequest extends FormRequest
     }
 
     /**
-     * 回傳相應的錯誤訊息
+     * Get custom messages for validator errors.
      *
      * @return array
      */
@@ -38,18 +45,50 @@ class AllRequest extends FormRequest
     {
         return [];
     }
+
+    /**
+     * 自定義錯誤
+     * error_code 為 錯誤代碼
+     * message 為 自定義錯誤訊息
+     *
+     * @return array
+     */
+    protected function getCustomError()
+    {
+        return [
+            'error_code' => 100000,
+            'message' => '驗證失敗'
+        ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     * 重寫 function，只回傳 Json 格式
+     * 根據 .env 的 APP_DEBUG 回傳 details 詳細錯誤
+     *
+     * @param  \Illuminate\Contracts\Validation\Validator  $validator
+     * @return void
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
     protected function failedValidation(Validator $validator)
     {
-        // 取得錯誤資訊
-        $responseData = $validator->errors();
         $httpStatus = Response::HTTP_BAD_REQUEST;
+
+        $error = $this->getCustomError();
         $response = [
-            "statusCode" => $httpStatus,
-            "error" => $responseData
+            'error_code' => $error['error_code'],
+            'message' => $error['message'],
         ];
-        // 產生 JSON 格式的 response，(422 是 Laravel 預設的錯誤 http status，可自行更換)，這邊以 400
+
+        $appDebug = config('app.debug', false);
+
+        if ($appDebug) {
+            $response['detail'] = $validator->errors();
+        }
+
         $response = response()->json($response, $httpStatus);
-        // 丟出 exception
+
         throw new HttpResponseException($response);
     }
 }
