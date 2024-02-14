@@ -16,8 +16,8 @@ class MailController extends Controller
     public function index()
     {
         $mailData = [
-            'title' => 'Mail from ItSolutionStuff.com',
-            'body' => 'This is for testing email using smtp.'
+            'title' => 'Mail.com',
+            'body' => 'https://www.colorzilla.com/zh-tw/gradient-editor/'
         ];
          
         Mail::to('sumi143yy@gmail.com')->send(new DemoMail($mailData));

@@ -30,7 +30,10 @@ class DemoMail extends Mailable
      */
     public function build()
     {
-        return $this->subject('Mail from ItSolutionStuff.com')
-            ->view('emails.demoMail');
+        return $this->subject('二手書平台-給開發人員的信')
+            ->view('emails.demoMail', [
+                'url' => 'https://www.colorzilla.com/zh-tw/gradient-editor/',
+            ])
+            ->with(['message' => $this]);
     }
 }
